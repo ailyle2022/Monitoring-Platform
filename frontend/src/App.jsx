@@ -33,7 +33,17 @@ function App() {
       .then(res => res.json())
       .then(data => {
         if (data.data) {
-          setNodes(data.data.nodes || [])
+          const nodes = data.data.nodes || []
+          const initializedNodes = nodes.map(node => ({
+            ...node,
+            data: {
+              ...node.data,
+              podData: node.data.podData ? Object.fromEntries(
+                Object.entries(node.data.podData).map(([k, v]) => [k, { ...v, status: 'on', lastUpdate: Date.now() }])
+              ) : { 0: { status: 'on', cpu: 0, memory: 0, disk: 0, lastUpdate: Date.now() } }
+            }
+          }))
+          setNodes(initializedNodes)
           setEdges(data.data.edges || [])
         } else if (data.nodes && data.edges) {
           setNodes(data.nodes)
@@ -41,6 +51,28 @@ function App() {
         }
       })
       .catch(err => console.log('No saved architecture yet'))
+  }, [])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNodes(nds => nds.map(node => {
+        const now = Date.now()
+        let updated = false
+        const podData = { ...(node.data.podData || {}) }
+        
+        Object.keys(podData).forEach(key => {
+          const lastUpdate = podData[key].lastUpdate || 0
+          if (now - lastUpdate > 60000 && podData[key].status !== 'off') {
+            podData[key] = { ...podData[key], status: 'off' }
+            updated = true
+          }
+        })
+        
+        return updated ? { ...node, data: { ...node.data, podData } } : node
+      }))
+    }, 10000)
+    
+    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
@@ -61,8 +93,9 @@ function App() {
                 const podData = { ...(node.data.podData || {}) }
                 const podIndex = metrics.podIndex
                 podData[podIndex] = {
-                  ...(podData[podIndex] || { status: 'on', cpu: 0, memory: 0, disk: 0 }),
-                  status: metrics.status || podData[podIndex]?.status || 'on',
+                  ...(podData[podIndex] || { status: 'on', cpu: 0, memory: 0, disk: 0, lastUpdate: Date.now() }),
+                  status: 'on',
+                  lastUpdate: Date.now(),
                   cpu: metrics.cpu ?? podData[podIndex]?.cpu ?? 0,
                   memory: metrics.memory ?? podData[podIndex]?.memory ?? 0,
                   disk: metrics.disk ?? podData[podIndex]?.disk ?? 0,
@@ -179,8 +212,8 @@ function App() {
           ...config,
           podCount: config.nodeType === 'api-gateway' || config.nodeType === 'microservice' ? 3 : 1,
           podData: config.nodeType === 'api-gateway' || config.nodeType === 'microservice'
-            ? { 0: { status: 'on', cpu: 0, memory: 0, disk: 0 }, 1: { status: 'on', cpu: 0, memory: 0, disk: 0 }, 2: { status: 'on', cpu: 0, memory: 0, disk: 0 } }
-            : { 0: { status: 'on', cpu: 0, memory: 0, disk: 0 } },
+            ? { 0: { status: 'on', cpu: 0, memory: 0, disk: 0, lastUpdate: Date.now() }, 1: { status: 'on', cpu: 0, memory: 0, disk: 0, lastUpdate: Date.now() }, 2: { status: 'on', cpu: 0, memory: 0, disk: 0, lastUpdate: Date.now() } }
+            : { 0: { status: 'on', cpu: 0, memory: 0, disk: 0, lastUpdate: Date.now() } },
         },
       }
 

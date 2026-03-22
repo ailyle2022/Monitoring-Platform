@@ -91,7 +91,6 @@ export class WebhookController {
   receiveMetrics(@Body() data: {
     nodeId: string;
     podIndex: number;
-    status?: string;
     cpu?: number;
     memory?: number;
     disk?: number;
@@ -101,7 +100,6 @@ export class WebhookController {
     const metrics = {
       nodeId: data.nodeId,
       podIndex: data.podIndex,
-      status: data.status,
       cpu: data.cpu,
       memory: data.memory,
       disk: data.disk,
@@ -116,7 +114,6 @@ export class WebhookController {
       podId: `${data.nodeId}-pod-${data.podIndex}`,
       nodeId: data.nodeId,
       data: {
-        status: data.status,
         cpu: data.cpu,
         memory: data.memory,
         disk: data.disk,
