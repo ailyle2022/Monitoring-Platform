@@ -3,7 +3,7 @@
 ## 项目概述
 - **项目名称**: MicroService Monitoring Platform
 - **类型**: Web应用 (React + React Flow) + NestJS Backend
-- **核心功能**: 拖拽式绘制微服务架构图，实时监控组件状态
+- **核心功能**: 拖拽式绘制微服务架构图，实时监控组件状态和连线指标
 - **目标用户**: 架构师、开发人员、运维人员
 
 ## 项目结构
@@ -64,21 +64,32 @@
 | 方法 | 路径 | 描述 |
 |------|------|------|
 | GET | `/webhook/stream` | SSE 实时流 (接收指标更新) |
-| POST | `/webhook/metrics` | 接收组件指标上报 |
+| POST | `/webhook/metrics` | 接收节点指标上报 |
+| POST | `/webhook/connection-metrics` | 接收连线指标上报 |
 | GET | `/webhook/events` | 获取事件列表 |
 | POST | `/webhook/subscribe` | 订阅事件通知 |
 | DELETE | `/webhook/subscribe/:id` | 取消订阅 |
 
-### Webhook 指标上报格式
+### 节点指标上报格式
 ```json
 POST /webhook/metrics
 {
   "nodeId": "node-xxx",
   "podIndex": 0,
-  "status": "on|off|warning",
   "cpu": 45,
   "memory": 60,
   "disk": 30
+}
+```
+
+### 连线指标上报格式
+```json
+POST /webhook/connection-metrics
+{
+  "sourceNodeId": "gateway-xxx",
+  "targetNodeId": "microservice-xxx",
+  "responseTime": 85,
+  "status": 200
 }
 ```
 
@@ -87,7 +98,7 @@ POST /webhook/metrics
 ### 页面结构
 
 #### 编辑页面
-- **左侧面板**: 组件列表 + 使用说明
+- **左侧面板**: 组件列表 + 使用说明 + Webhook 上报说明
 - **右侧画布**: 拖拽式架构编辑区
 - **顶部工具栏**: 页面标题 + 功能按钮
 
@@ -103,9 +114,9 @@ POST /webhook/metrics
 | 背景色 | `#0d1117` | 主背景 |
 | 画布背景 | `#161b22` | 编辑区背景 |
 | 主色调 | `#58a6ff` | 蓝色高亮 |
-| 成功色 | `#238636` | 绿色 |
+| 成功色 | `#22c55e` | 绿色 |
 | 警告色 | `#eab308` | 黄色 |
-| 错误色 | `#f85149` | 红色 |
+| 错误色 | `#ef4444` | 红色 |
 | 边框色 | `#30363d` | 分隔线 |
 | 文字色 | `#e6edf3` | 主文字 |
 
@@ -123,9 +134,16 @@ POST /webhook/metrics
 #### 连线样式
 | 协议类型 | 样式 |
 |----------|------|
-| HTTP | 实线 + 蓝色 |
-| gRPC | 实线 + 绿色 |
-| GraphQL | 虚线 + 紫色 |
+| HTTP | 实线 + 蓝色 `#58a6ff` |
+| gRPC | 实线 + 绿色 `#22c55e` |
+| GraphQL | 虚线 + 紫色 `#a855f7` |
+
+#### HTTP 状态码颜色
+| 状态码 | 颜色 |
+|--------|------|
+| 2xx | 绿色 `#22c55e` |
+| 4xx | 黄色 `#eab308` |
+| 5xx | 红色 `#ef4444` |
 
 ### 字体
 - 主字体: `'JetBrains Mono', 'Fira Code', monospace`
@@ -137,8 +155,8 @@ POST /webhook/metrics
 
 ### 可拖拽组件
 1. **Frontend** - 前端应用
-2. **API Gateway** - 网关服务
-3. **Microservice** - 微服务
+2. **API Gateway** - 网关服务 (支持多 Pod)
+3. **Microservice** - 微服务 (支持多 Pod)
 4. **Database** - 数据库
 5. **Cache** - 缓存
 6. **Message Queue** - 消息队列
@@ -146,22 +164,32 @@ POST /webhook/metrics
 
 ### 编辑功能
 - **拖拽添加**: 从左侧面板拖拽到画布
-- **节点编辑**: 双击编辑节点名称、Pod 数量
-- **连线编辑**: 双击编辑通信协议
+- **节点编辑**: 双击编辑节点名称、Pod 数量 (Gateway/Microservice 专用)
+- **连线编辑**: 双击编辑通信协议、响应时间、状态码
 - **删除**: 选中后按 Delete 删除
 
 ### 节点显示
 - 节点 ID (只读，蓝色 monospace)
 - 节点名称
-- Pod 数量
-- Pod 状态指示器 (绿色=运行中, 灰色=停止, 黄色=警告)
+- Pod 数量 (Gateway/Microservice 可编辑)
+- Pod 状态指示器 (绿色=运行中, 灰色=停止)
 - 资源使用率 (CPU/内存/磁盘)
 - 使用率颜色: 绿色<70%, 黄色70-90%, 红色>90%
 
+### 连线显示
+- 通信协议 (HTTP/gRPC/GraphQL)
+- 响应时间 (ms)
+- HTTP 状态码
+- 格式: `85ms [200]`
+
+### 状态自动管理
+- 节点初始化时默认状态为 `on`
+- 超过 1 分钟未收到 Webhook 上报，状态自动变为 `off`
+
 ### 实时监控
 - SSE 连接实时接收指标更新
-- 指标通过 Webhook 上报
-- 自动更新节点显示状态
+- 节点指标通过 `/webhook/metrics` 上报
+- 连线指标通过 `/webhook/connection-metrics` 上报
 
 ## 启动说明
 
@@ -189,10 +217,13 @@ docker-compose up -d
 2. ✅ 节点自由移动
 3. ✅ 创建节点间连线
 4. ✅ 删除节点和连线
-5. ✅ 双击编辑节点 (ID只读, 名称可编辑, Pod数量可编辑)
-6. ✅ 双击编辑连线协议
+5. ✅ 双击编辑节点 (ID只读, 名称可编辑, Pod数量仅Gateway/Microservice可编辑)
+6. ✅ 双击编辑连线 (显示源/目标节点ID, 编辑协议/响应时间/状态码)
 7. ✅ 预览页面完整显示架构
 8. ✅ 深色主题视觉效果
 9. ✅ NestJS 后端提供架构保存 API
-10. ✅ Webhook 接收指标上报
-11. ✅ SSE 实时推送指标更新
+10. ✅ Webhook 接收节点指标上报
+11. ✅ Webhook 接收连线指标上报
+12. ✅ SSE 实时推送指标更新
+13. ✅ 连线显示响应时间和状态码
+14. ✅ 状态码颜色区分 (2xx绿/4xx黄/5xx红)

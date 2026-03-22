@@ -8,7 +8,9 @@
 - 支持 7 种组件类型: 前端、API Gateway、微服务、数据库、缓存、消息队列、负载均衡
 - 节点间连线支持 HTTP、gRPC、GraphQL 协议
 - 双击编辑节点名称和 Pod 数量
+- 双击编辑连线协议、响应时间和状态码
 - 实时监控组件状态 (CPU/内存/磁盘使用率)
+- 实时监控连线响应时间和 HTTP 状态码
 - Webhook 接口接收外部监控数据
 - SSE 实时推送指标更新
 - 深色主题 UI
@@ -62,20 +64,33 @@ npm run dev
 | 方法 | 路径 | 描述 |
 |------|------|------|
 | GET | `/webhook/stream` | SSE 实时流 |
-| POST | `/webhook/metrics` | 上报指标 |
+| POST | `/webhook/metrics` | 上报节点指标 (CPU/内存/磁盘) |
+| POST | `/webhook/connection-metrics` | 上报连线指标 (响应时间/状态码) |
 
-### 指标上报示例
+### 节点指标上报示例
 
 ```bash
 curl -X POST http://localhost:3000/webhook/metrics \
   -H "Content-Type: application/json" \
   -d '{
-    "nodeId": "gateway-1",
+    "nodeId": "gateway-xxx",
     "podIndex": 0,
-    "status": "on",
     "cpu": 45,
     "memory": 60,
     "disk": 30
+  }'
+```
+
+### 连线指标上报示例
+
+```bash
+curl -X POST http://localhost:3000/webhook/connection-metrics \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sourceNodeId": "gateway-xxx",
+    "targetNodeId": "microservice-xxx",
+    "responseTime": 85,
+    "status": 200
   }'
 ```
 
@@ -84,7 +99,7 @@ curl -X POST http://localhost:3000/webhook/metrics \
 1. 从左侧面板拖拽组件到画布
 2. 从节点上方拖到下方创建连线
 3. 双击节点编辑名称和 Pod 数量
-4. 双击连线修改通信协议
+4. 双击连线编辑通信协议、响应时间和状态码
 5. 按 Delete 键删除选中元素
 6. 点击"预览"按钮查看完整架构
 7. 点击"保存"按钮保存到数据库

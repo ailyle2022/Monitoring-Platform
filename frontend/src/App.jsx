@@ -18,6 +18,39 @@ const nodeTypes = {
 
 const API_BASE = 'http://localhost:3000'
 
+const getStatusColor = (status) => {
+  if (status >= 500) return '#ef4444'
+  if (status >= 400) return '#eab308'
+  return '#22c55e'
+}
+
+const getEdgeLabelStyle = (data) => {
+  return {
+    fontSize: 10,
+    fill: data?.status ? getStatusColor(data.status) : '#8b949e',
+    fontWeight: 500,
+  }
+}
+
+const getEdgeLabelBgStyle = () => ({
+  fill: '#161b22',
+  fillOpacity: 0.95,
+})
+
+const getEdgeLabel = (edge) => {
+  if (edge.data?.responseTime && edge.data?.status) {
+    return `${edge.data.responseTime}ms [${edge.data.status}]`
+  }
+  return edge.data?.protocol || 'HTTP'
+}
+
+const getEdgeStyle = (data) => {
+  return {
+    stroke: data?.protocol === 'GraphQL' ? '#a855f7' : data?.protocol === 'gRPC' ? '#22c55e' : '#58a6ff',
+    strokeDasharray: data?.protocol === 'GraphQL' ? '5,5' : undefined,
+  }
+}
+
 function App() {
   const [nodes, setNodes] = useState([])
   const [edges, setEdges] = useState([])
@@ -86,7 +119,29 @@ function App() {
       try {
         const metrics = JSON.parse(event.data)
         console.log('SSE received:', metrics)
-        if (metrics.nodeId && metrics.podIndex !== undefined) {
+        
+        if (metrics.type === 'connection-metrics') {
+          setEdges((eds) => eds.map(edge => {
+            if (edge.source === metrics.sourceNodeId && edge.target === metrics.targetNodeId) {
+              const newData = {
+                ...edge.data,
+                responseTime: metrics.responseTime,
+                status: metrics.status,
+              }
+              return {
+                ...edge,
+                data: newData,
+                label: `${metrics.responseTime}ms [${metrics.status}]`,
+                labelStyle: { fill: getStatusColor(metrics.status), fontSize: 10, fontWeight: 500 },
+                labelBgStyle: { fill: '#161b22', fillOpacity: 0.95 },
+                labelBgPadding: [4, 4],
+                labelShowBg: true,
+                style: getEdgeStyle(newData),
+              }
+            }
+            return edge
+          }))
+        } else if (metrics.nodeId && metrics.podIndex !== undefined) {
           setNodes((nds) => {
             const updated = nds.map((node) => {
               if (node.id === metrics.nodeId) {
@@ -153,8 +208,13 @@ function App() {
           {
             ...params,
             type: 'default',
-            data: { protocol: 'HTTP', label: 'HTTP' },
+            data: { protocol: 'HTTP' },
+            label: 'HTTP',
             style: { stroke: '#58a6ff' },
+            labelShowBg: true,
+            labelBgPadding: [4, 4],
+            labelBgStyle: { fill: '#161b22', fillOpacity: 0.95 },
+            labelStyle: { fill: '#8b949e', fontSize: 10 },
           },
           eds
         )
@@ -281,7 +341,15 @@ function App() {
         <div className="flow-container" onDrop={onDrop} onDragOver={onDragOver}>
           <ReactFlow
             nodes={nodes}
-            edges={edges}
+            edges={edges.map(e => ({
+              ...e,
+              label: getEdgeLabel(e),
+              labelStyle: getEdgeLabelStyle(e.data),
+              labelBgStyle: getEdgeLabelBgStyle(),
+              labelShowBg: true,
+              labelBgPadding: [4, 4],
+              style: e.style || getEdgeStyle(e.data),
+            }))}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
@@ -363,6 +431,24 @@ function App() {
           <div className="edit-dialog">
             <h3>编辑连接</h3>
             <div style={{ marginBottom: '12px' }}>
+              <label style={{ fontSize: '12px', color: '#8b949e', display: 'block', marginBottom: '6px' }}>源节点</label>
+              <input
+                type="text"
+                value={editingEdge.source}
+                readOnly
+                style={{ width: '100%', padding: '10px 12px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#58a6ff', fontSize: '14px', fontFamily: 'monospace' }}
+              />
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ fontSize: '12px', color: '#8b949e', display: 'block', marginBottom: '6px' }}>目标节点</label>
+              <input
+                type="text"
+                value={editingEdge.target}
+                readOnly
+                style={{ width: '100%', padding: '10px 12px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#58a6ff', fontSize: '14px', fontFamily: 'monospace' }}
+              />
+            </div>
+            <div style={{ marginBottom: '12px' }}>
               <label style={{ fontSize: '12px', color: '#8b949e', display: 'block', marginBottom: '6px' }}>通信协议</label>
               <select
                 id="protocolSelect"
@@ -380,11 +466,18 @@ function App() {
               </button>
               <button className="btn btn-primary" onClick={() => {
                 const protocol = document.getElementById('protocolSelect').value
+                const label = editingEdge.data?.responseTime ? `${editingEdge.data.responseTime}ms [${editingEdge.data.status}]` : protocol
+                const statusColor = editingEdge.data?.status ? getStatusColor(editingEdge.data.status) : '#8b949e'
                 setEdges((eds) => eds.map((e) =>
                   e.id === editingEdge.id
                     ? {
                         ...e,
-                        data: { ...e.data, protocol, label: protocol },
+                        data: { ...e.data, protocol },
+                        label,
+                        labelStyle: { fill: statusColor, fontSize: 10 },
+                        labelBgStyle: { fill: '#161b22', fillOpacity: 0.95 },
+                        labelBgPadding: [4, 4],
+                        labelShowBg: true,
                         style: {
                           stroke: protocol === 'GraphQL' ? '#a855f7' : protocol === 'gRPC' ? '#22c55e' : '#58a6ff',
                           strokeDasharray: protocol === 'GraphQL' ? '5,5' : undefined,

@@ -22,7 +22,7 @@ export class WebhookController {
       res.write(`: heartbeat\n\n`);
     }, 30000);
 
-    const subscription = this.metricsUpdates.subscribe({
+    const metricsSubscription = this.metricsUpdates.subscribe({
       next: (data) => {
         res.write(`data: ${JSON.stringify(data)}\n\n`);
       },
@@ -33,9 +33,20 @@ export class WebhookController {
       }
     });
 
+    const connectionSubscription = this.webhookService.getConnectionMetricsUpdates()
+      .subscribe({
+        next: (data) => {
+          res.write(`data: ${JSON.stringify({ type: 'connection-metrics', ...data })}\n\n`);
+        },
+        error: (err) => {
+          console.error('SSE connection metrics error:', err);
+        }
+      });
+
     res.on('close', () => {
       clearInterval(heartbeat);
-      subscription.unsubscribe();
+      metricsSubscription.unsubscribe();
+      connectionSubscription.unsubscribe();
     });
   }
 
@@ -123,5 +134,21 @@ export class WebhookController {
     });
 
     return { success: true, metrics };
+  }
+
+  @Post('connection-metrics')
+  receiveConnectionMetrics(@Body() data: {
+    sourceNodeId: string;
+    targetNodeId: string;
+    responseTime: number;
+    status: number;
+  }) {
+    this.webhookService.addConnectionMetrics({
+      sourceNodeId: data.sourceNodeId,
+      targetNodeId: data.targetNodeId,
+      responseTime: data.responseTime,
+      status: data.status,
+    });
+    return { success: true };
   }
 }

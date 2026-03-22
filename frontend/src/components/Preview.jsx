@@ -6,6 +6,26 @@ const nodeTypes = {
   custom: CustomNode,
 }
 
+const getStatusColor = (status) => {
+  if (status >= 500) return '#ef4444'
+  if (status >= 400) return '#eab308'
+  return '#22c55e'
+}
+
+const getEdgeLabelStyle = (data) => {
+  if (!data?.responseTime && !data?.status) return {}
+  return {
+    fontSize: 10,
+    fill: data.status ? getStatusColor(data.status) : '#8b949e',
+    fontWeight: 500,
+  }
+}
+
+const getEdgeLabelBgStyle = () => ({
+  fill: '#161b22',
+  fillOpacity: 0.95,
+})
+
 function Preview({ nodes, edges, onBack }) {
   return (
     <div className="preview-container">
@@ -18,7 +38,12 @@ function Preview({ nodes, edges, onBack }) {
       <div className="preview-flow">
         <ReactFlow
           nodes={nodes}
-          edges={edges}
+          edges={edges.map(e => ({
+            ...e,
+            labelStyle: getEdgeLabelStyle(e.data),
+            labelBgStyle: getEdgeLabelBgStyle(),
+            labelShowBg: true,
+          }))}
           nodeTypes={nodeTypes}
           fitView
           nodesDraggable={false}

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
+import { Subject } from 'rxjs';
 
 export interface MonitorEvent {
   id: string;
@@ -27,10 +28,19 @@ export interface WebhookSubscription {
   createdAt: string;
 }
 
+export interface ConnectionMetrics {
+  sourceNodeId: string;
+  targetNodeId: string;
+  responseTime: number;
+  status: number;
+  timestamp: string;
+}
+
 @Injectable()
 export class WebhookService {
   private events: MonitorEvent[] = [];
   private subscriptions: WebhookSubscription[] = [];
+  private connectionMetricsUpdates = new Subject<ConnectionMetrics>();
 
   addEvent(event: Omit<MonitorEvent, 'id' | 'timestamp'>): MonitorEvent {
     const newEvent: MonitorEvent = {
@@ -89,6 +99,17 @@ export class WebhookService {
 
   getSubscriptions(): WebhookSubscription[] {
     return [...this.subscriptions];
+  }
+
+  getConnectionMetricsUpdates(): Subject<ConnectionMetrics> {
+    return this.connectionMetricsUpdates;
+  }
+
+  addConnectionMetrics(data: Omit<ConnectionMetrics, 'timestamp'>): void {
+    this.connectionMetricsUpdates.next({
+      ...data,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   private async notifySubscribers(event: MonitorEvent): Promise<void> {
