@@ -321,24 +321,27 @@ function App() {
                 autoFocus
               />
             </div>
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ fontSize: '12px', color: '#8b949e', display: 'block', marginBottom: '6px' }}>Pod 数量</label>
-              <input
-                type="number"
-                min="1"
-                max="100"
-                id="podCountInput"
-                defaultValue={editingNode.data.podCount || 1}
-                style={{ width: '100%', padding: '10px 12px', background: '#161b22', border: '1px solid #30363d', borderRadius: '6px', color: '#e6edf3', fontSize: '14px' }}
-              />
-            </div>
+            {(editingNode.data.nodeType === 'api-gateway' || editingNode.data.nodeType === 'microservice') && (
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ fontSize: '12px', color: '#8b949e', display: 'block', marginBottom: '6px' }}>Pod 数量</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  id="podCountInput"
+                  defaultValue={editingNode.data.podCount || 1}
+                  style={{ width: '100%', padding: '10px 12px', background: '#161b22', border: '1px solid #30363d', borderRadius: '6px', color: '#e6edf3', fontSize: '14px' }}
+                />
+              </div>
+            )}
             <div className="edit-dialog-buttons">
               <button className="btn" onClick={() => setEditingNode(null)}>
                 取消
               </button>
               <button className="btn btn-primary" onClick={() => {
                 const label = document.getElementById('nodeLabelInput').value || editingNode.data.label
-                const podCount = parseInt(document.getElementById('podCountInput')?.value) || 1
+                const podCountInput = document.getElementById('podCountInput')
+                const podCount = podCountInput ? (parseInt(podCountInput.value) || 1) : editingNode.data.podCount
                 setNodes((nds) => {
                   const updated = nds.map((n) =>
                     n.id === editingNode.id ? { ...n, data: { ...n.data, label, podCount } } : n
