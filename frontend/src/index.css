@@ -1,0 +1,373 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  background: #0d1117;
+  color: #e6edf3;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+}
+
+.header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.save-message {
+  color: #22c55e;
+  font-size: 12px;
+  margin-right: 8px;
+}
+
+.main-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.flow-container {
+  flex: 1;
+  background: #161b22;
+}
+
+.app aside {
+  width: 260px;
+  background: #0d1117;
+  border-right: 1px solid #30363d;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+aside h2 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e6edf3;
+  margin-bottom: 12px;
+}
+
+.component-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.component-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  cursor: move;
+  transition: all 0.2s ease;
+}
+
+.component-item:hover {
+  border-color: #58a6ff;
+  background: #1c2128;
+}
+
+.component-item:active {
+  cursor: grabbing;
+}
+
+.component-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.component-info {
+  flex: 1;
+}
+
+.component-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #e6edf3;
+}
+
+.component-desc {
+  font-size: 10px;
+  color: #8b949e;
+  margin-top: 2px;
+}
+
+.usage-guide {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #30363d;
+}
+
+.usage-guide h3 {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e6edf3;
+  margin-bottom: 8px;
+}
+
+.usage-guide ul {
+  list-style: none;
+  font-size: 11px;
+  color: #8b949e;
+}
+
+.usage-guide li {
+  margin-bottom: 6px;
+  padding-left: 12px;
+  position: relative;
+}
+
+.usage-guide li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: #58a6ff;
+}
+
+.webhook-info {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #30363d;
+}
+
+.webhook-info strong {
+  font-size: 11px;
+  color: #e6edf3;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.webhook-info pre {
+  font-size: 10px;
+  background: #161b22;
+  padding: 8px;
+  border-radius: 4px;
+  overflow-x: auto;
+  color: #8b949e;
+}
+
+.btn {
+  padding: 8px 16px;
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e6edf3;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  background: #30363d;
+  border-color: #8b949e;
+}
+
+.btn-primary {
+  background: #238636;
+  border-color: #238636;
+}
+
+.btn-primary:hover {
+  background: #2ea043;
+  border-color: #2ea043;
+}
+
+.custom-node {
+  background: #21262d;
+  border: 2px solid #30363d;
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 160px;
+  max-width: 220px;
+}
+
+.custom-node.selected {
+  border-color: #58a6ff;
+}
+
+.custom-node-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.custom-node-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 18px;
+}
+
+.custom-node-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.custom-node-desc {
+  font-size: 11px;
+  color: #8b949e;
+  margin-bottom: 8px;
+}
+
+.react-flow__node {
+  cursor: pointer;
+}
+
+.react-flow__edge-path {
+  stroke-width: 2;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #58a6ff;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+}
+
+.edit-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 360px;
+  max-width: 90%;
+  z-index: 1001;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+.edit-dialog h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e6edf3;
+  margin-bottom: 20px;
+}
+
+.edit-dialog input,
+.edit-dialog select {
+  width: 100%;
+  padding: 10px 12px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e6edf3;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.edit-dialog input:focus,
+.edit-dialog select:focus {
+  outline: none;
+  border-color: #58a6ff;
+}
+
+.edit-dialog-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.preview-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #0d1117;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+}
+
+.preview-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.preview-flow {
+  flex: 1;
+}
+
+.react-flow__minimap {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+}
+
+.react-flow__controls {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+}
+
+.react-flow__controls-button {
+  background: #161b22;
+  border-color: #30363d;
+}
+
+.react-flow__controls-button:hover {
+  background: #21262d;
+}
+
+.react-flow__background pattern circle {
+  fill: #30363d;
+}
+
+.pod-status {
+  font-size: 11px;
+}
