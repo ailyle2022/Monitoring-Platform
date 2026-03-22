@@ -211,8 +211,7 @@ aside h2 {
   border: 2px solid #30363d;
   border-radius: 8px;
   padding: 12px;
-  min-width: 160px;
-  max-width: 220px;
+  width: 220px;
 }
 
 .custom-node.selected {
